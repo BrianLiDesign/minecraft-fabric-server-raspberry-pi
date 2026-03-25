@@ -25,12 +25,12 @@ The goal is a clean, GitHub-friendly setup that avoids committing huge or sensit
 - A launch script (`start.sh`) for consistent server startup
 - A systemd unit (`minecraft.service`) for automatic background hosting
 - A backup script (`backup.sh`) that saves your world + mods + datapacks
-- An update script (`update-fabric.sh`) to refresh Fabric server files for a target Minecraft version
+- An update script (`update.sh`) to refresh Fabric server files for a target Minecraft version
 
 ### Built With
 
 ![Linux Badge][linux-badge]
-![Raspberry Pi Badge][raspi-badge]
+![Raspberry Pi Badge][raspberry-pi-badge]
 ![Java Badge][java-badge]
 ![Fabric Badge][fabric-badge]
 ![Systemd Badge][systemd-badge]
@@ -49,8 +49,8 @@ The goal is a clean, GitHub-friendly setup that avoids committing huge or sensit
 1.  Clone the repository
 
     ```bash
-    git clone https://github.com/<YOUR_USERNAME>/<YOUR_REPO>.git
-    cd <YOUR_REPO>
+    git clone https://github.com/BrianLiDesign/minecraft-fabric-server-raspberry-pi.git
+    cd minecraft-fabric-server-raspberry-pi
     ```
 
 2.  Copy scripts into your server directory (or set SERVER_DIR to match your layout)
@@ -97,13 +97,13 @@ The goal is a clean, GitHub-friendly setup that avoids committing huge or sensit
 
 ## Usage
 
-**Start/Stop/Restart**
+### Start/Stop/Restart
 
     sudo systemctl start minecraft
     sudo systemctl stop minecraft
     sudo systemctl restart minecraft
 
-**View Logs**
+### View Logs
 
 Follow logs live (this is the “console output” when using systemd):
 
@@ -113,7 +113,7 @@ View recent logs:
 
     sudo journalctl -u minecraft -n 200 --no-pager
 
-**Backups**
+### Backups
 
 Backups include:
 
@@ -131,15 +131,13 @@ Run:
 
     ./scripts/backup.sh
 
-Backups are written to:
-
-    ~/mc-backups/
+Backups are written to: `~/mc-backups/`
 
 Override backup location:
 
     BACKUP_DIR=~/backups ./scripts/backup.sh
 
-**Update Fabric**
+### Update Fabric
 
 This updates Fabric server files for a target Minecraft version (example below uses 1.21.1):
 
@@ -154,7 +152,7 @@ Recommended update flow:
 
 Mods are not auto-updated. Many mods must be updated per Minecraft version.
 
-**Datapacks**
+### Datapacks
 
 Datapacks must be placed in the world folder:
 
@@ -162,9 +160,64 @@ Datapacks must be placed in the world folder:
 
 Each datapack should be either:
 
-    - a folder containing pack.mcmeta and data/, or
+- A folder containing `pack.mcmeta` and `data/`, or
+- A `.zip` containing `pack.mcmeta` and `data/`
 
-    - a .zip containing pack.mcmeta and data/
+## Troubleshooting
+
+### `Permission denied` when running scripts
+
+Your shell scripts may not be marked as executable.
+
+Fix with:
+
+    chmod +x start.sh
+    chmod +x scripts/backup.sh
+    chmod +x scripts/update.sh
+
+If you are using systemd, also make sure the service is running as a user that has permission to access the server folder.
+
+### Cannot connect to the server from another device
+
+First confirm the server is actually running and listening on the expected port.
+
+Check:
+
+    sudo systemctl status minecraft.service
+    ss -tulpn | grep 25565
+
+Then verify:
+
+- The Raspberry Pi’s local IP address is correct
+- Port 25565 is allowed through your firewall
+- Your router port forwarding is set up correctly for external access
+- Everyone is using the same Minecraft version and mod setup
+
+For local network play, connect using the Pi’s LAN IP:
+
+    hostname -I
+
+### Getting Help
+
+When debugging, these commands usually reveal the problem fastest:
+
+    sudo systemctl status minecraft.service
+    journalctl -u minecraft.service -n 100 --no-pager
+    java -version
+    ls -lah
+
+If you open an issue, include:
+
+- Raspberry Pi model
+- Raspberry Pi OS version
+- Java version
+- Minecraft / Fabric version
+- The exact error message
+- Relevant service logs
+
+## Contact
+
+Brian Li - brian.li.social@gmail.com
 
 ## Acknowledgments
 
@@ -172,3 +225,9 @@ Each datapack should be either:
 - Raspberry Pi community for Linux + Pi server resources
 
 <!-- MARKDOWN LINKS & IMAGES -->
+
+[linux-badge]: https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black&labelColor=white
+[raspberry-pi-badge]: https://img.shields.io/badge/-RaspberryPi-C51A4A?style=for-the-badge&logo=Raspberry-Pi&labelColor=black
+[java-badge]: https://img.shields.io/badge/java-%23ED8B00?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=black
+[fabric-badge]: https://img.shields.io/badge/fabric-fabric?style=for-the-badge&color=gray
+[systemd-badge]: https://img.shields.io/badge/systemd-systemd?style=for-the-badge&color=blue
