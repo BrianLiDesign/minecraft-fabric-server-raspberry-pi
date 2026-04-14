@@ -1,22 +1,33 @@
-[Unit]
-Description=Minecraft Fabric Server
-After=network-online.target
-Wants=network-online.target
+#!/bin/bash
 
-[Service]
-User=brianlidesign
-WorkingDirectory=/home/brianlidesign/mc-fabric
-ExecStart=/home/brianlidesign/mc-fabric/start.sh
+SESSION="minecraft"
+SERVER_DIR="/home/brianlidesign/mc-fabric"
+JAVA="/usr/bin/java"
+JAR="fabric-server-launch.jar"
 
-Restart=on-failure
-RestartSec=10
+if pgrep -f "$JAR" >/dev/null; then
+    echo "A Minecraft server is already running:"
+    pgrep -af "$JAR"
+    exit 1
+fi
 
-# Allow lots of open files
-LimitNOFILE=100000
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+    echo "Tmux session '$SESSION' already exists."
+    exit 1
+fi
 
-# Time to save on stop/restart
-KillSignal=SIGINT
-TimeoutStopSec=60
+cd "$SERVER_DIR" || exit 1
 
-[Install]
-WantedBy=multi-user.target
+tmux new-session -d -s "$SESSION" \
+"$JAVA -Xms512M -Xmx2500M -Djava.net.preferIPv4Stack=true -jar $JAR nogui"
+
+sleep 2
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+    echo "Server started in tmux session: $SESSION"
+    echo "Attach with: tmux attach -t $SESSION"
+else
+    echo "Server failed to stay running."
+    echo "Check logs with: tail -n 50 $SERVER_DIR/logs/latest.log"
+    exit 1
+fi
